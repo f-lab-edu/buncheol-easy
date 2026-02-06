@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS users
     -- 가상 컬럼에 유니크 키 부여
     UNIQUE KEY (active_social_id),
 
-    PRIMARY KEY (id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    PRIMARY KEY (id),
 
--- social_id index 추가
-CREATE INDEX idx_users_social_id ON users(social_id);
+    -- social_id index 추가
+    INDEX idx_users_social_id (social_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

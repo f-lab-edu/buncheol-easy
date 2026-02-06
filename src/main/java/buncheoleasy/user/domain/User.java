@@ -1,5 +1,7 @@
 package buncheoleasy.user.domain;
 
+import buncheoleasy.global.exception.domain.BusinessException;
+import buncheoleasy.global.exception.domain.ErrorCode;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,28 +26,38 @@ public class User {
 
     private User(final String socialId, final String nickname, final String email) {
         validateSocialId(socialId);
-        this.socialId = socialId;
         validateNickname(nickname);
-        this.nickname = nickname;
         validateEmail(email);
+
+        this.socialId = socialId;
+        this.nickname = nickname;
         this.email = email;
     }
 
     private void validateSocialId(final String socialId) {
         if (socialId == null || socialId.isBlank()) {
-            throw new RuntimeException();
+            throw new BusinessException(ErrorCode.USER_SOCIAL_ID_REQUIRED);
+        }
+        if(socialId.length() > 64) {
+            throw new BusinessException(ErrorCode.USER_SOCIAL_ID_LENGTH_INVALID);
         }
     }
 
     private void validateNickname(final String nickname) {
-        if(nickname == null || nickname.isBlank() || nickname.length() > 10) {
-            throw new RuntimeException();
+        if(nickname == null || nickname.isBlank()) {
+            throw new BusinessException(ErrorCode.USER_NICKNAME_REQUIRED);
+        }
+        if(nickname.length() > 10) {
+            throw new BusinessException(ErrorCode.USER_NICKNAME_LENGTH_INVALID);
         }
     }
 
     private void validateEmail(final String email) {
         if(email == null || email.isBlank()) {
-            throw new RuntimeException();
+            throw new BusinessException(ErrorCode.USER_EMAIL_REQUIRED);
+        }
+        if(email.length() > 255) {
+            throw new BusinessException(ErrorCode.USER_EMAIL_LENGTH_INVALID);
         }
     }
 
@@ -55,8 +67,11 @@ public class User {
     }
 
     private void validatePhoneNumber(final String phoneNumber) {
-        if(phoneNumber == null || phoneNumber.isBlank() || phoneNumber.length() > 13) {
-            throw new RuntimeException();
+        if(phoneNumber == null || phoneNumber.isBlank()) {
+            throw new BusinessException(ErrorCode.USER_PHONE_NUMBER_REQUIRED);
+        }
+        if(phoneNumber.length() > 13) {
+            throw new BusinessException(ErrorCode.USER_PHONE_NUMBER_LENGTH_INVALID);
         }
     }
 }

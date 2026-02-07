@@ -11,7 +11,7 @@ public interface UserMapper {
     User findById(Long id);
     User findBySocialId(String socialId);
     void save(User user);
-    void updateNickname(@Param("id") Long id, @Param("nickname") String nickname);
-    void updatePhoneNumber(@Param("id") Long id, @Param("phoneNumber") String phoneNumber);
-    void softDelete(@Param("id") Long id, @Param("deletedAt") LocalDateTime deletedAt);
+    int updateNickname(@Param("id") Long id, @Param("nickname") String nickname);
+    int updatePhoneNumber(@Param("id") Long id, @Param("phoneNumber") String phoneNumber);
+    int softDelete(@Param("id") Long id, @Param("deletedAt") LocalDateTime deletedAt);
 }

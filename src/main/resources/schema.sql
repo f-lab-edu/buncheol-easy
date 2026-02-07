@@ -13,11 +13,11 @@ CREATE TABLE IF NOT EXISTS users
     -- 삭제되지 않았을 때만 social_id를 가지고, 삭제되면 NULL이 되는 가상 컬럼
     active_social_id VARCHAR(64) AS (IF(deleted_at IS NULL, social_id, NULL)) VIRTUAL,
 
-    -- 가상 컬럼에 유니크 키 부여
-    UNIQUE KEY (active_social_id),
-
     PRIMARY KEY (id),
 
-    -- social_id index 추가
+    -- 가상 컬럼에 유니크 인덱스 부여
+    UNIQUE INDEX idx_users_active_social_id (active_social_id),
+
+    -- social_id 인덱스 추가
     INDEX idx_users_social_id (social_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

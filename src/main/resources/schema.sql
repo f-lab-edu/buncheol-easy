@@ -2,9 +2,9 @@
 CREATE TABLE IF NOT EXISTS users
 (
     id           BIGINT           NOT NULL AUTO_INCREMENT COMMENT 'PK',
-    social_id    VARCHAR(64)      NOT NULL COMMENT '카카오 소셜 고유 ID',
+    social_id    VARCHAR(100)      NOT NULL COMMENT '소셜 고유 ID',
     nickname     VARCHAR(10)      NOT NULL COMMENT '닉네임',
-    email        VARCHAR(255)     NOT NULL COMMENT '이메일',
+    email        VARCHAR(320)     NOT NULL COMMENT '이메일',
     phone_number VARCHAR(30)      NULL     COMMENT '전화번호',
     created_at   TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성일시',
     updated_at   TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',

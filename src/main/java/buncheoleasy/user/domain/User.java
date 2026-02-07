@@ -38,7 +38,7 @@ public class User {
         if (socialId == null || socialId.isBlank()) {
             throw new BusinessException(ErrorCode.USER_SOCIAL_ID_REQUIRED);
         }
-        if(socialId.length() > 64) {
+        if(socialId.length() > 100) {
             throw new BusinessException(ErrorCode.USER_SOCIAL_ID_LENGTH_INVALID);
         }
     }
@@ -56,7 +56,7 @@ public class User {
         if(email == null || email.isBlank()) {
             throw new BusinessException(ErrorCode.USER_EMAIL_REQUIRED);
         }
-        if(email.length() > 255) {
+        if(email.length() > 320) {
             throw new BusinessException(ErrorCode.USER_EMAIL_LENGTH_INVALID);
         }
     }

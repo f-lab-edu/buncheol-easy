@@ -1,0 +1,291 @@
+package buncheoleasy.user.domain;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import buncheoleasy.global.exception.domain.BusinessException;
+import buncheoleasy.global.exception.domain.ErrorCode;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
+
+@DisplayName("User 엔티티 테스트")
+class UserTest {
+
+    @Nested
+    @DisplayName("User 생성 테스트")
+    class CreateUserTest {
+
+        @Test
+        void 유저_생성에_성공한다() {
+            // given
+            String provider = "kakao";
+            String providerId = "123456";
+            String email = "test@example.com";
+
+            // when
+            User user = User.create(provider, providerId, email);
+
+            // then
+            assertThat(user).isNotNull();
+            assertThat(user.getSocialInfo().provider()).isEqualTo(SocialProvider.KAKAO);
+            assertThat(user.getSocialInfo().providerId()).isEqualTo(providerId);
+            assertThat(user.getEmail().value()).isEqualTo(email);
+            assertThat(user.getNickname().value()).startsWith("Guest");
+            assertThat(user.getPhoneNumber()).isNull();
+            assertThat(user.getDeletedAt()).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("ProviderId 검증 테스트")
+    class ValidateProviderIdTest {
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"   "})
+        void providerId가_null이거나_빈_값인_경우_예외가_발생한다(String providerId) {
+            // when & then
+            assertThatThrownBy(() -> User.create("kakao", providerId, "test@example.com"))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_SOCIAL_ID_REQUIRED.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_SOCIAL_ID_REQUIRED);
+        }
+
+        @Test
+        void providerId가_최대_길이를_초과하면_예외가_발생한다() {
+            // given
+            String providerId = "a".repeat(101);
+
+            // when & then
+            assertThatThrownBy(() -> User.create("kakao", providerId, "test@example.com"))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_SOCIAL_ID_LENGTH_INVALID.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_SOCIAL_ID_LENGTH_INVALID);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"kakao@123456", "kakao 123456", "kakao한글123", "google#123", "naver!456"})
+        void providerId_형식이_유효하지_않은_경우_예외가_발생한다(String providerId) {
+            // when & then
+            assertThatThrownBy(() -> User.create("kakao", providerId, "test@example.com"))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_SOCIAL_ID_FORMAT_INVALID.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_SOCIAL_ID_FORMAT_INVALID);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"123456", "789012", "123", "test-user_123"})
+        void 올바른_형식의_providerId로_유저를_생성할_수_있다(String providerId) {
+            // when & then
+            assertThatCode(() -> User.create("kakao", providerId, "test@example.com"))
+                    .doesNotThrowAnyException();
+        }
+    }
+
+    @Nested
+    @DisplayName("Email 검증 테스트")
+    class ValidateEmailTest {
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"   "})
+        void email이_null이거나_빈_값인_경우_예외가_발생한다(String email) {
+            // when & then
+            assertThatThrownBy(() -> User.create("kakao", "123456", email))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_EMAIL_REQUIRED.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_EMAIL_REQUIRED);
+        }
+
+        @Test
+        void email이_최대_길이를_초과하면_예외가_발생한다() {
+            // given
+            String email = "a".repeat(321);
+
+            // when & then
+            assertThatThrownBy(() -> User.create("kakao", "123456", email))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_EMAIL_LENGTH_INVALID.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_EMAIL_LENGTH_INVALID);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"testexample.com", "test@", "test@example", "test@example.c", "@example.com"})
+        void email_형식이_유효하지_않은_경우_예외가_발생한다(String email) {
+            // when & then
+            assertThatThrownBy(() -> User.create("kakao", "123456", email))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_EMAIL_FORMAT_INVALID.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_EMAIL_FORMAT_INVALID);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+                "test@example.com",
+                "test.user@example.co.kr",
+                "test+tag@sub.example.com",
+                "test_user123@example-domain.org"
+        })
+        void 올바른_형식의_email로_유저를_생성할_수_있다(String email) {
+            // when & then
+            assertThatCode(() -> User.create("kakao", "123456", email))
+                    .doesNotThrowAnyException();
+        }
+    }
+
+    @Nested
+    @DisplayName("PhoneNumber 검증 테스트")
+    class ValidatePhoneNumberTest {
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"   "})
+        void phoneNumber가_null이거나_빈_값인_경우_예외가_발생한다(String phoneNumber) {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+
+            // when & then
+            assertThatThrownBy(() -> user.updatePhoneNumber(phoneNumber))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_PHONE_NUMBER_REQUIRED.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_PHONE_NUMBER_REQUIRED);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"012345678", "012345678901"})
+        void phoneNumber가_길이가_유효하지_않으면_예외가_발생한다(String phoneNumber) {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+
+            // when & then
+            assertThatThrownBy(() -> user.updatePhoneNumber(phoneNumber))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_PHONE_NUMBER_LENGTH_INVALID.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_PHONE_NUMBER_LENGTH_INVALID);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"0201234567", "1012345678", "00123456789", "a101234567", "0201234567a"})
+        void phoneNumber_형식이_유효하지_않은_경우_예외가_발생한다(String phoneNumber) {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+
+            // when & then
+            assertThatThrownBy(() -> user.updatePhoneNumber(phoneNumber))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_PHONE_NUMBER_FORMAT_INVALID.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_PHONE_NUMBER_FORMAT_INVALID);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"01012345678", "01112345678", "01612345678", "01912345678", "0161234567"})
+        void 올바른_형식의_phoneNumber로_업데이트할_수_있다(String phoneNumber) {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+
+            // when & then
+            assertThatCode(() -> user.updatePhoneNumber(phoneNumber))
+                    .doesNotThrowAnyException();
+
+            assertThat(user.getPhoneNumber().value()).isEqualTo(phoneNumber);
+        }
+
+        @Test
+        void 동일한_전화번호로_변경_시도시_예외가_발생한다() {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+            String phoneNumber = "01012345678";
+            user.updatePhoneNumber(phoneNumber);
+
+            // when & then
+            assertThatThrownBy(() -> user.updatePhoneNumber(phoneNumber))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_PHONE_NUMBER_UNCHANGED.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_PHONE_NUMBER_UNCHANGED);
+        }
+    }
+
+    @Nested
+    @DisplayName("Nickname 업데이트 테스트")
+    class UpdateNicknameTest {
+
+        @Test
+        void 올바른_형식의_nickname으로_업데이트할_수_있다() {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+            String newNickname = "새닉네임";
+
+            // when & then
+            assertThatCode(() -> user.updateNickname(newNickname))
+                    .doesNotThrowAnyException();
+
+            assertThat(user.getNickname().value()).isEqualTo(newNickname);
+        }
+
+        @Test
+        void 동일한_닉네임으로_변경_시도시_예외가_발생한다() {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+            String currentNickname = user.getNickname().value();
+
+            // when & then
+            assertThatThrownBy(() -> user.updateNickname(currentNickname))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_NICKNAME_UNCHANGED.getMessage())
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_NICKNAME_UNCHANGED);
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"   "})
+        void nickname이_null이거나_빈_값인_경우_예외가_발생한다(String nickname) {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+
+            // when & then
+            assertThatThrownBy(() -> user.updateNickname(nickname))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_NICKNAME_REQUIRED.getMessage());
+        }
+
+        @Test
+        void nickname이_최대_길이를_초과하면_예외가_발생한다() {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+            String nickname = "a".repeat(21);
+
+            // when & then
+            assertThatThrownBy(() -> user.updateNickname(nickname))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_NICKNAME_LENGTH_INVALID.getMessage());
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"테스트@유저", "테스트 유저", "테스트_유저", "유저!", "nick#name"})
+        void nickname_형식이_유효하지_않은_경우_예외가_발생한다(String nickname) {
+            // given
+            User user = User.create("kakao", "123456", "test@example.com");
+
+            // when & then
+            assertThatThrownBy(() -> user.updateNickname(nickname))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_NICKNAME_FORMAT_INVALID.getMessage());
+        }
+    }
+}

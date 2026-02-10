@@ -36,4 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 
-application.yaml
+### Claude Code ###
+.claude/
+
+### application.yaml ###
+*.yaml
